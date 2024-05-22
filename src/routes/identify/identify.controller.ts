@@ -109,7 +109,7 @@ export const computeIdentity = async (
           ? Math.min(primaryRow.oldestId, secondaryRow.oldestLinkedId)
           : primaryRow.oldestId;
       await db.query(
-        `update "contact" set "linkPrecedence" = 'secondary', "linkedId" = $3 where ("email" = $1 OR "phoneNumber" = $2) AND id != $3`,
+        `update "contact" set "linkPrecedence" = 'secondary', "linkedId" = $3, "updatedAt" = NOW() where ("email" = $1 OR "phoneNumber" = $2) AND id != $3`,
         [email, phoneNumber, oldestId]
       );
       finalOldestId = oldestId;
