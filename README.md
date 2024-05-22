@@ -1,8 +1,8 @@
 # BiteSpeed Assignment
 
-The application is available on `https://fluxkart-p9br.onrender.com`
+The application is available on https://fluxkart-p9br.onrender.com
 
-The `/identify` endpoint is exposed at `https://fluxkart-p9br.onrender.com/identify`
+The `/identify` endpoint is exposed at https://fluxkart-p9br.onrender.com/identify
 
 ## Tech stack
 
