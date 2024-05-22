@@ -7,7 +7,7 @@ export const getContacts = async (
   next: NextFunction
 ) => {
   try {
-    const { rows } = await db.query(`SELECT * from "contact"`);
+    const { rows } = await db.query(`SELECT * from "contact" order by id`);
 
     res.send({
       status: 200,

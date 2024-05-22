@@ -10,24 +10,78 @@
       integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
       crossorigin="anonymous"
     />
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.0/dist/cdn.min.js"
+    ></script>
   </head>
   <body>
-    <div class="container" style="max-width: 500px">
-      <form id="form" class="d-flex flex-column gap-3 p-3">
-        <input
-          type="email"
-          name="email"
-          class="form-control"
-          placeholder="Email"
-        />
-        <input
-          type="tel"
-          name="phoneNumber"
-          class="form-control"
-          placeholder="Phone number"
-        />
-        <button type="submit" class="btn btn-primary">Submit</button>
-      </form>
+    <div class="container row py-3 mx-auto" x-data="contactForm">
+      <div class="col-sm">
+        <form @submit.prevent="onSubmit()" class="d-flex flex-column gap-3">
+          <input
+            x-model="data.email"
+            type="email"
+            name="email"
+            class="form-control"
+            placeholder="Email"
+          />
+          <input
+            x-model="data.phoneNumber"
+            type="tel"
+            name="phoneNumber"
+            class="form-control"
+            placeholder="Phone number"
+          />
+          <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+      </div>
+      <div class="col-sm">
+        <pre
+          class="bg-light rounded p-3 flex"
+          style="height: 100%"
+          x-text="result"
+        ></pre>
+      </div>
+    </div>
+    <div class="container mt-3 table-responsive">
+      <hr />
+      <h3 class="text-center mb-3">Contacts</h3>
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Email</th>
+            <th>Phone number</th>
+            <th>Link precedence</th>
+            <th>Linked ID</th>
+            <th>Created at</th>
+            <th>Updated at</th>
+            <th>Deleted at</th>
+          </tr>
+        </thead>
+        <tbody>
+          <template
+            x-data
+            x-for="contact in $store.contacts.data"
+            :key="contact.id"
+          >
+            <tr>
+              <td x-text="contact.id"></td>
+              <td x-text="sanitizeValue(contact.email)"></td>
+              <td x-text="sanitizeValue(contact.phoneNumber)"></td>
+              <td
+                x-text="sanitizeValue(contact.linkPrecedence)"
+                style="text-transform: capitalize"
+              ></td>
+              <td x-text="sanitizeValue(contact.linkedId)"></td>
+              <td x-text="formatDate(contact.createdAt)"></td>
+              <td x-text="formatDate(contact.updatedAt)"></td>
+              <td x-text="formatDate(contact.deletedAt)"></td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
     </div>
     <script
       src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
@@ -36,28 +90,82 @@
     ></script>
   </body>
   <script>
-    const onSubmit = (e) => {
-      e.preventDefault();
-      console.log(e);
-    };
-    const form = document.getElementById("form");
-    if (form) {
-      form.addEventListener("submit", (e) => {
-        e.preventDefault();
-        const email = e.currentTarget.email.value;
-        const phoneNumber = e.currentTarget.phoneNumber.value;
-        fetch("/identify", {
-          method: "POST",
-          body: JSON.stringify({
-            email,
-            phoneNumber,
-          }),
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-        }).catch(console.log);
+    document.addEventListener("alpine:init", () => {
+      console.log("init");
+      Alpine.store("contacts", {
+        data: [],
+        setData: (data) => {
+          this.data = data;
+        },
+        init() {
+          this.getContacts();
+        },
+        async getContacts() {
+          try {
+            const res = await fetch("/contact");
+            const { rows } = await res.json();
+            this.data = rows || [];
+          } catch (error) {
+            this.data = [];
+          }
+        },
       });
-    }
+    });
+
+    const sanitizeValue = (value) => {
+      return value || "-";
+    };
+
+    const formatDate = (date) => {
+      if (!date) return sanitizeValue(date);
+      date = new Date(date);
+      return new Intl.DateTimeFormat("en-IN", {
+        dateStyle: "short",
+        timeStyle: "short",
+        hour12: false,
+      }).format(date);
+    };
+
+    const contactForm = {
+      data: {
+        email: "",
+        phoneNumber: "",
+      },
+      result: "Submit the form to see the response",
+      async onSubmit() {
+        let contacts = [];
+        this.result = "Loading...";
+        try {
+          const res = await fetch("/identify", {
+            method: "POST",
+            body: JSON.stringify({
+              email: this.data.email || null,
+              phoneNumber: this.data.phoneNumber || null,
+            }),
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+            },
+          });
+          const body = await res.json();
+          if (body.status === 400) {
+            this.result = body.message;
+            return;
+          }
+
+          this.result = JSON.stringify(body, null, 2);
+
+          this.data = {
+            email: "",
+            phoneNumber: "",
+          };
+          Alpine.store("contacts").getContacts();
+        } catch (error) {
+          console.log(error);
+          this.result = "Please enter either email or password";
+        }
+        return contacts.length > 0 ? contacts : null;
+      },
+    };
   </script>
 </html>
