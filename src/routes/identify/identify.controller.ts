@@ -13,7 +13,7 @@ export const computeIdentity = async (
       res.status(400).send({
         status: 400,
         message:
-          "Please provide a value for at-least one of the email or phoneNumber",
+          "Please provide a value for at-least one of the email or phone number",
       });
       return;
     }
@@ -21,6 +21,7 @@ export const computeIdentity = async (
     email = email || null;
     phoneNumber = phoneNumber || null;
 
+    // get grouped data for given email and phoneNumber
     const { rows } = await db.query(
       `SELECT "linkPrecedence", count(id), min(id) as "oldestId", min("linkedId") as "oldestLinkedId" from "contact" where  ${
         email && phoneNumber
@@ -43,6 +44,7 @@ export const computeIdentity = async (
 
     let finalOldestId = -1;
 
+    // create if no data exists
     if (primaryCount === 0 && secondaryCount === 0) {
       try {
         await db.query(
@@ -73,6 +75,7 @@ export const computeIdentity = async (
       return;
     }
 
+    // create a secondary contact if a primary contact exist or link with the primary of secondary contact found
     if (primaryCount === 1 || (primaryCount === 0 && secondaryCount >= 1)) {
       const linkedId =
         primaryCount && secondaryCount === 0
@@ -99,6 +102,7 @@ export const computeIdentity = async (
       finalOldestId = linkedId;
     }
 
+    // update all other contacts to secondary except the oldest contact if multiple primary contacts found
     if (primaryCount > 1) {
       const oldestId =
         primaryCount && secondaryCount
