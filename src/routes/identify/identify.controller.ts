@@ -21,6 +21,14 @@ export const computeIdentity = async (
     email = email || null;
     phoneNumber = phoneNumber || null;
 
+    if (phoneNumber && isNaN(Number(phoneNumber))) {
+      res.status(400).send({
+        status: 400,
+        message: "Phone number is not valid",
+      });
+      return;
+    }
+
     // get grouped data for given email and phoneNumber
     const { rows } = await db.query(
       `SELECT "linkPrecedence", count(id), min(id) as "oldestId", min("linkedId") as "oldestLinkedId" from "contact" where  ${
