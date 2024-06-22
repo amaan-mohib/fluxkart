@@ -11,7 +11,7 @@ const pool = new Pool({
   host: DB_HOST,
   port: Number(DB_PORT!),
   database: DB_NAME,
-  // ssl: true,
+  ssl: true,
 });
 const query = (text: string, params?: any[]) => pool.query(text, params);
 const db = { query };
